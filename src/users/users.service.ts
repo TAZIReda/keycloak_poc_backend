@@ -1,49 +1,53 @@
-/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { MOCK_USERS, User } from './dto/mock-user';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
+const USERS_PATH = path.resolve(__dirname, '../../src/data/users.json');
 @Injectable()
 export class UsersService {
-  getAdminData() {
-    throw new Error('Method not implemented.');
+  private async readUsers(): Promise<any[]> {
+    const data = await fs.readFile(USERS_PATH, 'utf8');
+    return JSON.parse(data);
   }
-  getPublicData() {
-    throw new Error('Method not implemented.');
+
+  private async writeUsers(users: any[]): Promise<void> {
+    await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
   }
-    private users: User[] = MOCK_USERS;
-    
-      findAll(): User[] {
-        return this.users;
-      }
-    
-      findOne(id: number): User | undefined {
-        return this.users.find(user => user.id === id);
-      }
-    
-      create(createUserDto: CreateUserDto): User {
-        const newUser: User = {
-          id: this.users.length + 1,
-          username: createUserDto.username,
-          email: createUserDto.email,
-            firstName: createUserDto.firstName,
-            lastName: createUserDto.lastName,
-            role: createUserDto.role, 
-        };
-        this.users.push(newUser);
-        return newUser;
-      }
-    
-      update(id: number, updateUserDto: CreateUserDto): User | undefined {
-        const userIndex = this.users.findIndex(user => user.id === id);
-        if (userIndex === -1) return undefined;
-        this.users[userIndex] = { ...this.users[userIndex], ...updateUserDto };
-        return this.users[userIndex];
-      }
-    
-      remove(id: number): boolean {
-        const initialLength = this.users.length;
-        this.users = this.users.filter(user => user.id !== id);
-        return this.users.length < initialLength;
-      }
+
+  async create(createUserDto: CreateUserDto) {
+    const users = await this.readUsers();
+    const newUser = {
+      id: Date.now(),
+      ...createUserDto,
+    };
+    users.push(newUser);
+    await this.writeUsers(users);
+    return newUser;
+  }
+
+  async findAll() {
+    return this.readUsers();
+  }
+
+  async findOne(id: number) {
+    const users = await this.readUsers();
+    return users.find((u) => u.id === id);
+  }
+
+  async update(id: number, updateUserDto: Partial<CreateUserDto>) {
+    const users = await this.readUsers();
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) return null;
+    users[index] = { ...users[index], ...updateUserDto };
+    await this.writeUsers(users);
+    return users[index];
+  }
+
+  async remove(id: number) {
+    const users = await this.readUsers();
+    const updated = users.filter((u) => u.id !== id);
+    await this.writeUsers(updated);
+    return { deleted: true };
+  }
 }
