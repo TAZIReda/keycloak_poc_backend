@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { KeycloakModule } from './keycloak/keycloak.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 
 @Module({
   imports: [
@@ -14,6 +16,18 @@ import { KeycloakModule } from './keycloak/keycloak.module';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,   
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+    {
+    provide: APP_GUARD,
+    useClass: RoleGuard,
+  },],
 })
 export class AppModule {}

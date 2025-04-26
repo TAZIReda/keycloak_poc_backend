@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AuthGuard, KeycloakConnectModule } from 'nest-keycloak-connect';
+import { AuthGuard, KeycloakConnectModule, PolicyEnforcementMode, TokenValidation } from 'nest-keycloak-connect';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { KeycloakService } from './keycloak.service';
 import { AuthController } from './keycloak.controller';
@@ -17,6 +17,9 @@ import { AuthController } from './keycloak.controller';
         verifyTokenAudience: false,
         confidentialPort: 0,
         bearerOnly: true,
+        useResourceRoleMappings: true,
+        policyEnforcement: PolicyEnforcementMode.ENFORCING,
+      tokenValidation: TokenValidation.ONLINE,
       }),
       inject: [ConfigService],
     }),
